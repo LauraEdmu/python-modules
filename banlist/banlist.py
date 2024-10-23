@@ -53,8 +53,9 @@ class Banlist:
 				ban_list_bin = await f.read()
 				ban_list = pickle.loads(ban_list_bin)
 		except FileNotFoundError:
-			self.logger.debug(f"File not found: {self.path}. Initialising a new one")
 			ban_list = set()
+			os.makedirs(os.path.dirname(self.path), exist_ok=True)
+			self.logger.debug(f"File not found: {self.path}. Initialising a new one, and making the path")
 		except pickle.UnpicklingError as e:
 			self.logger.error(f"Failed to unpickle ban list: {e}")
 			raise e
@@ -99,8 +100,24 @@ class Banlist:
 			self.logger.error("Failed to pickle while adding an ident")
 			raise e
 
+	def purge(self):
+		try:
+			os.remove(self.path)
+			self.logger.debug(f"Successfully deleted {self.path}")
+		except FileNotFoundError:
+			self.logger.warning(f"File not found: {self.path}. Nothing to delete.")
+		except Exception as e:
+			self.logger.error(f"Failed to delete {self.path}: {e}")
+			raise e
+
 async def main():
 	banlist = Banlist()
+
+	# await banlist.unban("wigwo")
+	# res = await banlist.check_list("wigwo")
+	# print(res)
+
+	banlist.purge()
 
 if __name__ == '__main__':
 	asyncio.run(main())
